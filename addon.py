@@ -21,8 +21,12 @@ import time
 # Initialization
 ###################################################################################################
 ###################################################################################################
+KEY_BUTTON_BACK = 275
+KEY_KEYBOARD_ESC = 61467
+
+ACTION_PARENT_DIR = 9
 ACTION_PREVIOUS_MENU = 10
-ACTION_SELECT_ITEM = 7
+ACTION_NAV_BACK = 92
 
 TEXT_ALIGN_LEFT = 0
 TEXT_ALIGN_RIGHT = 1
@@ -51,7 +55,10 @@ currentPhNum=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*2, BUTTON_W*4, BUTTON_H*2
                                 '', 'font40_title', '0xffffffff')
 currentPhNum1=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*1, BUTTON_W*4, BUTTON_H*2,
                                 '', 'font13', '0xffffffff')
-
+#CurrentArtist=xbmcgui.ControlLabel(10, addonH-80, 800, 70,
+#                                '', 'font30_title', '0xffffffff')
+#CurrentTitle=xbmcgui.ControlLabel(addonW-790, addonH-80, 800, 70,
+#                                '', 'font30_title', '0xffffffff', alignment=1)
 
 def phonenumber(value):
     phone = '(%s) %s - %s' %(value[0:3],value[3:6],value[6:10])
@@ -71,8 +78,8 @@ class updateThreadClass(threading.Thread):
 
             # Set labels
             currentPhNum.setLabel(phonenumber(currentPhNum1.getLabel()))
-#           radioText.setLabel(str(xbmcgui.Window(10000).getProperty('Radio.RadioText')))
-#           stationName.setLabel(str(xbmcgui.Window(10000).getProperty('Radio.StationName')))
+#            CurrentArtist.setLabel(str(xbmc.getInfoLabel[xbmc.MusicPlayer.Artist]))
+#            CurrentTitle.setLabel(str(xbmc.getInfoLabel[xbmc.MusicPlayer.Title]))
 #           currentVolume.setLabel("volume: " + str(xbmcgui.Window(10000).getProperty('Radio.Volume')))
 
             # Don't kill the CPU
@@ -85,15 +92,12 @@ class PhoneHPF(xbmcgui.WindowDialog):
         #self.h = self.getHeight()
         self.w = addonW
         self.h = addonH
-        self.background=xbmcgui.ControlImage(0, 0, self.w, self.h, mediaPath + "Carbon-Fiber-9.png")
+        self.background=xbmcgui.ControlImage(0, 0, self.w, self.h-40, mediaPath + "Carbon-Fiber-9.jpg")
         self.addControl(self.background)
 
-        #win = xbmcgui.Window(xbmcgui.getCurrentWindowId())
-        #category = str(win.getProperty('frequency'))
-
         # top and bottom images
-        self.addControl(xbmcgui.ControlImage(0, 0, self.w, 90, mediaPath + "top_bar.png"))
-        self.addControl(xbmcgui.ControlImage(0, self.h - 90, self.w, 90, mediaPath + "bottom_bar.png"))
+        #self.addControl(xbmcgui.ControlImage(0, 0, self.w, 90, mediaPath + "top_bar.png"))
+        #self.addControl(xbmcgui.ControlImage(0, self.h - 90, self.w, 90, mediaPath + "bottom_bar.png"))
 
         # phone logo
         self.addControl(xbmcgui.ControlImage(self.w - 90, 0, 90, 90, mediaPath + "phoneW.png"))
@@ -123,9 +127,9 @@ class PhoneHPF(xbmcgui.WindowDialog):
                                                 mediaPath + "icon_home.png"))
 
         # Back button
-        self.button_back_img=xbmcgui.ControlImage(self.w - 100, self.h - 83, 83, 83,
+        self.button_back_img=xbmcgui.ControlImage(self.w - 90, self.h - 130, 83, 83,
                                                 "icon_back_w.png")
-        self.button_back=xbmcgui.ControlButton(self.w - 100, self.h - 83, 83, 83,
+        self.button_back=xbmcgui.ControlButton(self.w - 90, self.h - 130, 83, 83,
                                                 "",
                                                 "floor_buttonFO.png",
                                                 "floor_button.png",
@@ -238,12 +242,15 @@ class PhoneHPF(xbmcgui.WindowDialog):
 
 
 
-
+		# Add Labels
         self.addControl(currentPhNum)
         self.addControl(currentPhNum1)
         currentPhNum1.setVisible(False)
+#        self.addControl(CurrentArtist)
+#        self.addControl(CurrentTitle)
 
-        # Start temperature update thread
+
+        # Start update thread
         self.updateThread = updateThreadClass()
         self.updateThread.start()
 
@@ -254,6 +261,20 @@ class PhoneHPF(xbmcgui.WindowDialog):
         xbmc.executebuiltin("XBMC.ActivateWindow(1112)")
         
         self.setFocus(self.buttonfocus)
+
+    def onAction(self, action):
+        # Escape key
+        buttonCode = action.getButtonCode()
+        actionID = action.getId()
+        if (actionID in (ACTION_PREVIOUS_MENU, ACTION_NAV_BACK, ACTION_PARENT_DIR)):
+            strWndFnc = "XBMC.ActivateWindow(10000)"
+            xbmc.executebuiltin(strWndFnc)
+            # stop the temp thread
+            sock.close()
+            self.updateThread.shutdown = True
+            self.updateThread.join()
+            self.close()
+
     def onControl(self, controlID):
         # Back button
         if controlID == self.button_back:
@@ -320,7 +341,7 @@ def Radio_SendCommand(self, command):
 
     return data
     
-
+addon = xbmcaddon.Addon(id='script.audio.BT_BC127_HFP')
 
 # Start the Addon
 dialog = PhoneHPF()
