@@ -341,7 +341,6 @@ def Radio_SendCommand(self, command):
 
     return data
     
-addon = xbmcaddon.Addon(id='script.audio.BT_BC127_HFP')
 
 # Start the Addon
 dialog = PhoneHPF()
