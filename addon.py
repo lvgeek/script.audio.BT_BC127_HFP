@@ -14,6 +14,7 @@ import socket
 import threading
 import time
 
+#from BC127 import BC127_io
 
 
 ###################################################################################################
@@ -55,6 +56,12 @@ currentPhNum=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*2, BUTTON_W*4, BUTTON_H*2
                                 '', 'font40_title', '0xffffffff')
 currentPhNum1=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*1, BUTTON_W*4, BUTTON_H*2,
                                 '', 'font13', '0xffffffff')
+messagelabel=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*1, BUTTON_W*4, BUTTON_H*2,
+                                '', 'font40_title', '0xffffffff')
+buttoncall=xbmcgui.ControlButton(BUTTON_W*1, BUTTON_H*5, BUTTON_W*2, BUTTON_H,
+                                 'CALL','floor_buttonFO.png','floor_button.png',
+                                 0,0,TEXT_ALIGN_CENTER_X_CENTER_Y)
+
 #CurrentArtist=xbmcgui.ControlLabel(10, addonH-80, 800, 70,
 #                                '', 'font30_title', '0xffffffff')
 #CurrentTitle=xbmcgui.ControlLabel(addonW-790, addonH-80, 800, 70,
@@ -63,6 +70,11 @@ currentPhNum1=xbmcgui.ControlLabel(BUTTON_W*5, BUTTON_H*1, BUTTON_W*4, BUTTON_H*
 def phonenumber(value):
     phone = '(%s) %s - %s' %(value[0:3],value[3:6],value[6:10])
     return phone
+
+def CheckPhoneNumber(PH1, skey):
+    if len(PH1) < 10:
+        PH1 = PH1 + skey
+    return PH1
 ###################################################################################################
 ###################################################################################################
 # Temperature update thread
@@ -78,6 +90,13 @@ class updateThreadClass(threading.Thread):
 
             # Set labels
             currentPhNum.setLabel(phonenumber(currentPhNum1.getLabel()))
+            if len(currentPhNum1.getLabel()) == 10:
+                buttoncall.setEnabled(True)
+                buttoncall.setLabel(textColor='0xFFFFFFFF')
+            else:
+                buttoncall.setEnabled(False)
+                buttoncall.setLabel(textColor='0x77777777')
+         
 #            CurrentArtist.setLabel(str(xbmc.getInfoLabel[xbmc.MusicPlayer.Artist]))
 #            CurrentTitle.setLabel(str(xbmc.getInfoLabel[xbmc.MusicPlayer.Title]))
 #           currentVolume.setLabel("volume: " + str(xbmcgui.Window(10000).getProperty('Radio.Volume')))
@@ -209,13 +228,13 @@ class PhoneHPF(xbmcgui.WindowDialog):
                                                 0,
                                                 0,TEXT_ALIGN_CENTER_X_CENTER_Y)
         self.addControl(self.button0)
-        self.buttoncall=xbmcgui.ControlButton(BUTTON_W*1, BUTTON_H*5, BUTTON_W*2, BUTTON_H,
-                                                "CALL",
-                                                "floor_buttonFO.png",
-                                                "floor_button.png",
-                                                0,
-                                                0,TEXT_ALIGN_CENTER_X_CENTER_Y)
-        self.addControl(self.buttoncall)
+
+        self.addControl(buttoncall)
+
+        self.buttonend=xbmcgui.ControlButton(BUTTON_W*1, BUTTON_H*5, BUTTON_W*2, BUTTON_H,
+                                                'END','floor_buttonFO.png','floor_button.png',
+                                                0,0,TEXT_ALIGN_CENTER_X_CENTER_Y)
+        self.addControl(self.buttonend)
 
         self.buttonbacksp=xbmcgui.ControlButton(BUTTON_W*3, BUTTON_H*5, BUTTON_W, BUTTON_H,
                                                 "<--",
@@ -246,7 +265,7 @@ class PhoneHPF(xbmcgui.WindowDialog):
         self.addControl(currentPhNum)
         self.addControl(currentPhNum1)
         currentPhNum1.setVisible(False)
-#        self.addControl(CurrentArtist)
+        self.addControl(messagelabel)
 #        self.addControl(CurrentTitle)
 
 
@@ -259,6 +278,7 @@ class PhoneHPF(xbmcgui.WindowDialog):
         
         # Go to x11 skin page
         xbmc.executebuiltin("XBMC.ActivateWindow(1112)")
+        self.dissablekeys(False)
         
         self.setFocus(self.buttonfocus)
 
@@ -296,29 +316,84 @@ class PhoneHPF(xbmcgui.WindowDialog):
             self.updateThread.join()
             self.close()
 
+        # CALL button
+        if controlID == buttoncall:
+            self.dissablekeys(True)         
+            BC127_SendCommand(self, 'CALL '+str(currentPhNum1.getLabel()))
+            messagelabel.setLabel('Calling...')
+            
+
+        # END button
+        if controlID == self.buttonend:
+            self.dissablekeys(False)         
+            BC127_SendCommand(self, 'END')
+            messagelabel.setLabel('Call Ended...')
+
         # Keypad Buttons
         if controlID == self.button1:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '1')
-        if controlID == self.button2:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '2')
-        if controlID == self.button3:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '3')
-        if controlID == self.button4:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '4')
-        if controlID == self.button5:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '5')
-        if controlID == self.button6:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '6')
-        if controlID == self.button7:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '7')
-        if controlID == self.button8:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '8')
-        if controlID == self.button9:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '9')
-        if controlID == self.button0:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel()) + '0')
-        if controlID == self.buttonbacksp:
-            currentPhNum1.setLabel(str(currentPhNum1.getLabel())[:-1])
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '1')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button2:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '2')
+            currentPhNum1.setLabel(tmpstr)            
+        elif controlID == self.button3:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '3')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button4:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '4')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button5:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '5')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button6:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '6')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button7:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '7')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button8:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '8')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button9:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '9')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.button0:
+            tmpstr = CheckPhoneNumber(str(currentPhNum1.getLabel()), '0')
+            currentPhNum1.setLabel(tmpstr)
+        elif controlID == self.buttonbacksp:
+            tmpstr = (str(currentPhNum1.getLabel())[:-1])
+            currentPhNum1.setLabel(tmpstr) 
+
+
+    def dissablekeys(self, call):
+        if call:
+            self.buttonend.setVisible(True)
+            buttoncall.setVisible(False)
+            self.button0.setEnabled(False)
+            self.button1.setEnabled(False)
+            self.button2.setEnabled(False)
+            self.button3.setEnabled(False)
+            self.button4.setEnabled(False)
+            self.button5.setEnabled(False)
+            self.button6.setEnabled(False)
+            self.button7.setEnabled(False)
+            self.button8.setEnabled(False)
+            self.button9.setEnabled(False)
+            self.buttonbacksp.setEnabled(False)
+        else:
+            self.buttonend.setVisible(False)
+            buttoncall.setVisible(True)
+            self.button0.setEnabled(True)
+            self.button1.setEnabled(True)
+            self.button2.setEnabled(True)
+            self.button3.setEnabled(True)
+            self.button4.setEnabled(True)
+            self.button5.setEnabled(True)
+            self.button6.setEnabled(True)
+            self.button7.setEnabled(True)
+            self.button8.setEnabled(True)
+            self.button9.setEnabled(True)
+            self.buttonbacksp.setEnabled(True)
 
 
 '''
@@ -329,17 +404,17 @@ volume_xx
 toggle_mute
 get_frequency
 '''
-def Radio_SendCommand(self, command):
+def BC127_SendCommand(self, command):
     UDP_IP = "127.0.0.1"
-    UDP_PORT = 5005
+    UDP_PORT = 5555
 
     # Send request to server
-    sock.sendto("radio_" + command + "\0", (UDP_IP, UDP_PORT))
+    sock.sendto("BC127_" + command + "\0", (UDP_IP, UDP_PORT))
 
     # Get reply from server
-    data, addr = sock.recvfrom(1024)
+    #data, addr = sock.recvfrom(1024)
 
-    return data
+    return #data
     
 
 # Start the Addon
