@@ -231,6 +231,11 @@ class PhoneHPF(xbmcgui.WindowDialog):
 
         self.addControl(buttoncall)
 
+        self.buttonend=xbmcgui.ControlButton(BUTTON_W*1, BUTTON_H*5, BUTTON_W*2, BUTTON_H,
+                                                'END','floor_buttonFO.png','floor_button.png',
+                                                0,0,TEXT_ALIGN_CENTER_X_CENTER_Y)
+        self.addControl(self.buttonend)
+
         self.buttonbacksp=xbmcgui.ControlButton(BUTTON_W*3, BUTTON_H*5, BUTTON_W, BUTTON_H,
                                                 "<--",
                                                 "floor_buttonFO.png",
@@ -273,6 +278,7 @@ class PhoneHPF(xbmcgui.WindowDialog):
         
         # Go to x11 skin page
         xbmc.executebuiltin("XBMC.ActivateWindow(1112)")
+        self.dissablekeys(False)
         
         self.setFocus(self.buttonfocus)
 
@@ -311,11 +317,15 @@ class PhoneHPF(xbmcgui.WindowDialog):
             self.close()
 
         # CALL button
-        if controlID == buttoncall:         
+        if controlID == buttoncall:
+            self.dissablekeys(True)         
             BC127_SendCommand(self, 'CALL '+str(currentPhNum1.getLabel()))
             messagelabel.setLabel('Calling...')
-            dialog = xbmcgui.Dialog()
-            dialog.ok('Calling...', str(currentPhNum1.getLabel()),'','Press OK to End Call')
+            
+
+        # END button
+        if controlID == self.buttonend:
+            self.dissablekeys(False)         
             BC127_SendCommand(self, 'END')
             messagelabel.setLabel('Call Ended...')
 
@@ -353,6 +363,37 @@ class PhoneHPF(xbmcgui.WindowDialog):
         elif controlID == self.buttonbacksp:
             tmpstr = (str(currentPhNum1.getLabel())[:-1])
             currentPhNum1.setLabel(tmpstr) 
+
+
+    def dissablekeys(self, call):
+        if call:
+            self.buttonend.setVisible(True)
+            buttoncall.setVisible(False)
+            self.button0.setEnabled(False)
+            self.button1.setEnabled(False)
+            self.button2.setEnabled(False)
+            self.button3.setEnabled(False)
+            self.button4.setEnabled(False)
+            self.button5.setEnabled(False)
+            self.button6.setEnabled(False)
+            self.button7.setEnabled(False)
+            self.button8.setEnabled(False)
+            self.button9.setEnabled(False)
+            self.buttonbacksp.setEnabled(False)
+        else:
+            self.buttonend.setVisible(False)
+            buttoncall.setVisible(True)
+            self.button0.setEnabled(True)
+            self.button1.setEnabled(True)
+            self.button2.setEnabled(True)
+            self.button3.setEnabled(True)
+            self.button4.setEnabled(True)
+            self.button5.setEnabled(True)
+            self.button6.setEnabled(True)
+            self.button7.setEnabled(True)
+            self.button8.setEnabled(True)
+            self.button9.setEnabled(True)
+            self.buttonbacksp.setEnabled(True)
 
 
 '''
